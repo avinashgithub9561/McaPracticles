@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Ticketing System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        #queue {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            list-style-type: none;
+        }
+        .ticket {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .vip {
+            background-color: #ffeb3b;
+        }
+        .regular {
+            background-color: #90caf9;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 70%;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Online Ticketing System</h1>
+
+    <div class="container">
+        <div>
+            <input type="text" id="customerName" placeholder="Enter Customer Name" />
+            <button onclick="bookTicket()">Book Ticket</button>
+        </div>
+        
+        <div class="button-container">
+            <button onclick="bookVIPTicket()">Book VIP Ticket</button>
+            <button onclick="showCancelMenu()">Cancel Ticket</button>
+            <button onclick="serveCustomer()">Serve Customer</button>
+        </div>
+
+        <div id="cancelMenu" style="display:none;">
+            <h3>Select a customer to cancel:</h3>
+            <ul id="cancelOptions"></ul>
+            <button onclick="hideCancelMenu()">Close Cancel Menu</button>
+        </div>
+
+        <ul id="queue"></ul>
+    </div>
+
+    <script>
+        // Priority Queue Implementation
+        class PriorityQueue {
+            constructor() {
+                this.queue = [];
+            }
+
+            enqueue(customer, isVIP = false) {
+                const ticket = { name: customer, isVIP: isVIP };
+                if (isVIP) {
+                    this.queue.unshift(ticket); // VIP customers at the front
+                } else {
+                    this.queue.push(ticket); // Regular customers at the end
+                }
+                this.updateQueueDisplay();
+            }
+
+            dequeue() {
+                return this.queue.shift(); // Serve the first customer in the queue
+            }
+
+            cancel(customerName) {
+                const index = this.queue.findIndex(ticket => ticket.name === customerName);
+                if (index !== -1) {
+                    this.queue.splice(index, 1); // Remove customer from the queue
+                    this.updateQueueDisplay();
+                } else {
+                    alert("Customer not found in the queue.");
+                }
+            }
+
+            updateQueueDisplay() {
+                const queueElement = document.getElementById("queue");
+                queueElement.innerHTML = ''; // Clear the list first
+                this.queue.forEach(ticket => {
+                    const li = document.createElement("li");
+                    li.classList.add('ticket');
+                    if (ticket.isVIP) li.classList.add('vip');
+                    else li.classList.add('regular');
+                    li.textContent = ticket.name + (ticket.isVIP ? " (VIP)" : "");
+                    queueElement.appendChild(li);
+                });
+            }
+
+            size() {
+                return this.queue.length;
+            }
+        }
+
+        const priorityQueue = new PriorityQueue();
+
+        // Book a regular ticket
+        function bookTicket() {
+            const name = document.getElementById('customerName').value.trim();
+            if (name) {
+                priorityQueue.enqueue(name, false);
+                document.getElementById('customerName').value = ''; // Clear input
+            } else {
+                alert("Please enter a customer name.");
+            }
+        }
+
+        // Book a VIP ticket
+        function bookVIPTicket() {
+            const name = document.getElementById('customerName').value.trim();
+            if (name) {
+                priorityQueue.enqueue(name, true);
+                document.getElementById('customerName').value = ''; // Clear input
+            } else {
+                alert("Please enter a customer name.");
+            }
+        }
+
+        // Show cancel menu with a list of customers
+        function showCancelMenu() {
+            const cancelMenu = document.getElementById("cancelMenu");
+            const cancelOptions = document.getElementById("cancelOptions");
+            cancelMenu.style.display = "block";
+            cancelOptions.innerHTML = ''; // Clear any existing options
+
+            priorityQueue.queue.forEach((ticket, index) => {
+                const li = document.createElement("li");
+                li.textContent = ticket.name + (ticket.isVIP ? " (VIP)" : "");
+                li.style.cursor = "pointer";
+                li.onclick = function() { cancelCustomer(ticket.name); };
+                cancelOptions.appendChild(li);
+            });
+        }
+
+        // Cancel selected customer
+        function cancelCustomer(customerName) {
+            priorityQueue.cancel(customerName);
+            hideCancelMenu(); // Close the cancel menu after canceling
+        }
+
+        // Hide cancel menu
+        function hideCancelMenu() {
+            document.getElementById("cancelMenu").style.display = "none";
+        }
+
+        // Serve the next customer (dequeue and remove from GUI)
+        function serveCustomer() {
+            if (priorityQueue.size() > 0) {
+                const servedCustomer = priorityQueue.dequeue();
+                alert("Serving customer: " + servedCustomer.name + (servedCustomer.isVIP ? " (VIP)" : ""));
+                priorityQueue.updateQueueDisplay(); // Update GUI to reflect the change
+            } else {
+                alert("No customers in the queue.");
+            }
+        }
+    </script>
+</body>
+</html>
